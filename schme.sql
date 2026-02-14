@@ -191,20 +191,20 @@ INSERT INTO access_points VALUES (v_ap, 'AP-ER-01', 120, 80, v_room1);
 INSERT INTO users VALUES (
     v_nurse, 'N001', 'Sarah Johnson', 'nurse',
     '0812345678', 'available', v_floor,
-    0, crypt('123456', gen_salt('bf')), NOW()
+    0, '$2b$10$Nqsyp/jJ3IP/4GeWF6LWlege4Gf/dpWO7LbsM163l8x.io.RPaWp6', NOW()
 );
 
 INSERT INTO users VALUES (
     v_porter, 'P001', 'Michael Tan', 'porter',
     '0823456789', 'available', v_floor,
-    0, crypt('123456', gen_salt('bf')), NOW()
+    0, '$2b$10$Nqsyp/jJ3IP/4GeWF6LWlege4Gf/dpWO7LbsM163l8x.io.RPaWp6', NOW()
 );
 
 -- Admin User (password = admin123)
 INSERT INTO users VALUES (
     gen_random_uuid(), 'A001', 'Administrator', 'admin',
     '0891234567', 'available', v_floor,
-    0, crypt('admin123', gen_salt('bf')), NOW()
+    0, '$2b$10$Y2f1VfXdts5rtJFNgl4izeeSB7pbL2RikYrURdw34Gjwi/80uPfCy', NOW()
 );
 
 -- Equipment
