@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS requests (
     id UUID PRIMARY KEY,
-    patient_name TEXT NOT NULL,
+    patient_name TEXT,
     priority INTEGER NOT NULL,
     pickup_room_id UUID NOT NULL REFERENCES rooms(id),
     destination_room_id UUID NOT NULL REFERENCES rooms(id),
@@ -101,6 +101,7 @@ CREATE TABLE IF NOT EXISTS requests (
     equipment_id UUID,
     status "RequestStatus" DEFAULT 'pending',
     notes TEXT,
+    estimated_duration_minutes INTEGER DEFAULT 30,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     assigned_at TIMESTAMP,
     completed_at TIMESTAMP

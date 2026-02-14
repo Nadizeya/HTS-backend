@@ -241,13 +241,16 @@ router.get("/search", authenticate, async (req, res) => {
     if (roomError) throw roomError;
 
     // Flatten room results to include equipment
-    const equipmentFromRooms = (roomResults || [])
-      .flatMap((room) =>
-        (room.equipment || []).map((eq) => ({
-          ...eq,
-          current_room: { id: room.id, name: room.name, room_type: room.room_type },
-        })),
-      );
+    const equipmentFromRooms = (roomResults || []).flatMap((room) =>
+      (room.equipment || []).map((eq) => ({
+        ...eq,
+        current_room: {
+          id: room.id,
+          name: room.name,
+          room_type: room.room_type,
+        },
+      })),
+    );
 
     // Combine and deduplicate results
     const allResults = [...(data || []), ...equipmentFromRooms];

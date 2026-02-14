@@ -9,6 +9,7 @@ const usersRoutes = require("./routes/users.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const equipmentRoutes = require("./routes/equipment.routes");
 const requestsRoutes = require("./routes/requests.routes");
+const roomsRoutes = require("./routes/rooms.routes");
 const mapRoutes = require("./routes/map.routes");
 const floorsRoutes = require("./routes/floors.routes");
 
@@ -72,6 +73,9 @@ app.use("/api/equipment", equipmentRoutes);
 
 // Requests Routes (Protected)
 app.use("/api/requests", requestsRoutes);
+
+// Rooms Routes (Protected)
+app.use("/api/rooms", roomsRoutes);
 
 // Map Routes (Protected)
 app.use("/api/map", mapRoutes);

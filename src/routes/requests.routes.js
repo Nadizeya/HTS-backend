@@ -253,10 +253,11 @@ router.post("/", authenticate, async (req, res) => {
       destination_room_id,
       equipment_type,
       notes,
+      estimated_duration_minutes,
     } = req.body;
 
+    // Validate required fields
     if (
-      !patient_name ||
       !priority ||
       !pickup_room_id ||
       !destination_room_id ||
@@ -265,7 +266,23 @@ router.post("/", authenticate, async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Missing required fields: patient_name, priority, pickup_room_id, destination_room_id, equipment_type",
+          "Missing required fields: priority, pickup_room_id, destination_room_id, equipment_type",
+      });
+    }
+
+    // Validate priority values (1=STAT, 2=HIGH, 3=NORMAL)
+    if (![1, 2, 3].includes(parseInt(priority))) {
+      return res.status(400).json({
+        success: false,
+        message: "Priority must be 1 (STAT), 2 (HIGH), or 3 (NORMAL)",
+      });
+    }
+
+    // Validate equipment type
+    if (!['wheelchair', 'bed'].includes(equipment_type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Equipment type must be 'wheelchair' or 'bed'",
       });
     }
 
@@ -273,13 +290,14 @@ router.post("/", authenticate, async (req, res) => {
       .from("requests")
       .insert([
         {
-          patient_name,
-          priority,
+          patient_name: patient_name || null,
+          priority: parseInt(priority),
           pickup_room_id,
           destination_room_id,
           equipment_type,
           requested_by: req.user.id,
           notes: notes || null,
+          estimated_duration_minutes: estimated_duration_minutes ? parseInt(estimated_duration_minutes) : 30,
           status: "pending",
         },
       ])

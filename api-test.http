@@ -130,6 +130,22 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/api/equipment?status=available
 Authorization: Bearer {{authToken}}
 
+### Get Available Equipment Count (New Request Screen)
+GET {{baseUrl}}/api/equipment/available
+Authorization: Bearer {{authToken}}
+
+### Get Available Wheelchairs Count
+GET {{baseUrl}}/api/equipment/available?type=wheelchair
+Authorization: Bearer {{authToken}}
+
+### Get Available Beds Count
+GET {{baseUrl}}/api/equipment/available?type=bed
+Authorization: Bearer {{authToken}}
+
+### Get Available Equipment on Specific Floor
+GET {{baseUrl}}/api/equipment/available?type=wheelchair&floor_id=floor-id-here
+Authorization: Bearer {{authToken}}
+
 ### Get Equipment by ID
 GET {{baseUrl}}/api/equipment/equipment-id-here
 Authorization: Bearer {{authToken}}
@@ -146,6 +162,50 @@ Content-Type: application/json
 {
   "status": "maintenance"
 }
+
+###############################################
+# ROOMS APIs - Location Search & Autocomplete
+###############################################
+
+### Get All Rooms
+GET {{baseUrl}}/api/rooms
+Authorization: Bearer {{authToken}}
+
+### Search Rooms (Autocomplete for New Request Form)
+GET {{baseUrl}}/api/rooms/search?q=ER
+Authorization: Bearer {{authToken}}
+
+### Search Rooms - Ward
+GET {{baseUrl}}/api/rooms/search?q=Ward
+Authorization: Bearer {{authToken}}
+
+### Search Rooms with Floor Filter
+GET {{baseUrl}}/api/rooms/search?q=ICU&floor_id=floor-id-here
+Authorization: Bearer {{authToken}}
+
+### Get Nearby Rooms (Same floor as user)
+GET {{baseUrl}}/api/rooms/nearby
+Authorization: Bearer {{authToken}}
+
+### Get Room by ID
+GET {{baseUrl}}/api/rooms/room-id-here
+Authorization: Bearer {{authToken}}
+
+### Get Rooms by Type (Ward)
+GET {{baseUrl}}/api/rooms/by-type/ward
+Authorization: Bearer {{authToken}}
+
+### Get Rooms by Type (ICU)
+GET {{baseUrl}}/api/rooms/by-type/icu
+Authorization: Bearer {{authToken}}
+
+### Get Rooms by Type (Emergency Room)
+GET {{baseUrl}}/api/rooms/by-type/er
+Authorization: Bearer {{authToken}}
+
+### Get Rooms on Specific Floor
+GET {{baseUrl}}/api/rooms?floor_id=floor-id-here
+Authorization: Bearer {{authToken}}
 
 ###############################################
 # REQUESTS APIs - Active Tasks & Requests
@@ -190,11 +250,12 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "patient_name": "John Doe",
+  "equipment_type": "wheelchair",
   "priority": 1,
   "pickup_room_id": "room-id-here",
   "destination_room_id": "room-id-here",
-  "equipment_type": "wheelchair",
+  "patient_name": "John Doe",
+  "estimated_duration_minutes": 30,
   "notes": "Patient needs immediate transfer"
 }
 
@@ -428,6 +489,74 @@ GET {{baseUrl}}/api/map/equipment-count?floor_id=floor-id-here
 Authorization: Bearer {{mapToken}}
 
 ###############################################
+# COMPLETE NEW REQUEST SCREEN WORKFLOW
+###############################################
+
+### Step 1: Login as Nurse
+# @name newRequestLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "employeecode": "N001",
+  "password": "123456"
+}
+
+@newRequestToken = {{newRequestLogin.response.body.data.token}}
+
+### Step 2: Get Nearby Rooms (Pre-load for quick selection)
+GET {{baseUrl}}/api/rooms/nearby
+Authorization: Bearer {{newRequestToken}}
+
+### Step 3: User selects "Wheelchair" - Check availability
+GET {{baseUrl}}/api/equipment/available?type=wheelchair
+Authorization: Bearer {{newRequestToken}}
+
+### Step 4: User types "ER" in From Location field (Autocomplete)
+GET {{baseUrl}}/api/rooms/search?q=ER
+Authorization: Bearer {{newRequestToken}}
+
+### Step 5: User types "Ward" in To Location field (Autocomplete)
+GET {{baseUrl}}/api/rooms/search?q=Ward
+Authorization: Bearer {{newRequestToken}}
+
+### Step 6: Submit Request (Replace room IDs with actual IDs from steps 4 & 5)
+# @name submitNewRequest
+POST {{baseUrl}}/api/requests
+Authorization: Bearer {{newRequestToken}}
+Content-Type: application/json
+
+{
+  "equipment_type": "wheelchair",
+  "priority": 2,
+  "pickup_room_id": "pickup-room-id-from-step-4",
+  "destination_room_id": "destination-room-id-from-step-5",
+  "patient_name": "John Doe",
+  "estimated_duration_minutes": 30,
+  "notes": "Patient requires wheelchair for X-ray transport"
+}
+
+### Step 7: Verify Request was Created
+@createdRequestId = {{submitNewRequest.response.body.data.id}}
+
+GET {{baseUrl}}/api/requests/{{createdRequestId}}
+Authorization: Bearer {{newRequestToken}}
+
+### Alternative: Create STAT (Emergency) Request without Patient Name
+POST {{baseUrl}}/api/requests
+Authorization: Bearer {{newRequestToken}}
+Content-Type: application/json
+
+{
+  "equipment_type": "bed",
+  "priority": 1,
+  "pickup_room_id": "pickup-room-id-here",
+  "destination_room_id": "destination-room-id-here",
+  "estimated_duration_minutes": 15,
+  "notes": "Emergency transfer required - STAT"
+}
+
+###############################################
 # Notes
 ###############################################
 
@@ -441,6 +570,18 @@ Authorization: Bearer {{mapToken}}
 # GET /api/equipment/nearby - Returns nearby equipment count
 # GET /api/requests/active - Returns active tasks list
 
+# New Request Screen Data:
+# GET /api/rooms/search?q=<term> - Room autocomplete for From/To Location fields
+# GET /api/rooms/nearby - Get rooms on same floor as user
+# GET /api/equipment/available?type=<wheelchair|bed> - Check equipment availability
+# POST /api/requests - Create new request with estimated_duration_minutes
+
+# Map Screen Data:
+# GET /api/map - Returns all equipment with positions
+# GET /api/map/floor/:floor_id - Equipment on specific floor
+# GET /api/floors - Floor selector (1, 2, 3)
+
 # Search Functionality:
 # GET /api/equipment/search?q=wheelchair - Search equipment
 # GET /api/equipment/nearby?type=wheelchair - Filter by type
+# GET /api/rooms/search?q=ER - Search rooms for autocomplete

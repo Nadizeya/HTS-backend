@@ -247,9 +247,11 @@ router.get("/:id/stats", authenticate, async (req, res) => {
     const stats = {
       equipment: {
         total: equipment?.length || 0,
-        wheelchair: equipment?.filter((e) => e.type === "wheelchair").length || 0,
+        wheelchair:
+          equipment?.filter((e) => e.type === "wheelchair").length || 0,
         bed: equipment?.filter((e) => e.type === "bed").length || 0,
-        available: equipment?.filter((e) => e.status === "available").length || 0,
+        available:
+          equipment?.filter((e) => e.status === "available").length || 0,
         in_use: equipment?.filter((e) => e.status === "in_use").length || 0,
         charging: equipment?.filter((e) => e.status === "charging").length || 0,
         maintenance:
