@@ -178,15 +178,7 @@ router.get("/:id", authenticate, async (req, res) => {
         *,
         current_floor:current_floor_id(id, name, building),
         current_room:current_room_id(id, name, room_type),
-        current_ap:current_ap_id(id, name, x_coord, y_coord),
-        assigned_request:assigned_request_id(
-          id,
-          patient_name,
-          priority,
-          status,
-          pickup_room:pickup_room_id(name),
-          destination_room:destination_room_id(name)
-        )
+        current_ap:current_ap_id(id, name, x_coord, y_coord)
       `,
       )
       .eq("id", id)
@@ -201,9 +193,32 @@ router.get("/:id", authenticate, async (req, res) => {
       });
     }
 
+    // If equipment has assigned request, fetch it separately
+    let assignedRequest = null;
+    if (data.assigned_request_id) {
+      const { data: requestData } = await supabase
+        .from("requests")
+        .select(
+          `
+          id,
+          patient_name,
+          priority,
+          status,
+          pickup_room:pickup_room_id(name),
+          destination_room:destination_room_id(name)
+        `,
+        )
+        .eq("id", data.assigned_request_id)
+        .single();
+      assignedRequest = requestData;
+    }
+
     res.json({
       success: true,
-      data,
+      data: {
+        ...data,
+        assigned_request: assignedRequest,
+      },
     });
   } catch (error) {
     console.error("Get equipment by ID error:", error);

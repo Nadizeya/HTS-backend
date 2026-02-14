@@ -22,10 +22,10 @@ router.get("/", authenticate, async (req, res) => {
         battery_level,
         status,
         last_seen_at,
+        assigned_request_id,
         current_floor:current_floor_id(id, name, building),
         current_room:current_room_id(id, name, room_type),
-        current_ap:current_ap_id(id, name, x_coord, y_coord),
-        assigned_request:assigned_request_id(id, patient_name, priority)
+        current_ap:current_ap_id(id, name, x_coord, y_coord)
       `,
       )
       .order("equipment_code", { ascending: true });
@@ -54,6 +54,7 @@ router.get("/", authenticate, async (req, res) => {
       battery_level: equipment.battery_level,
       status: equipment.status,
       last_seen_at: equipment.last_seen_at,
+      assigned_request_id: equipment.assigned_request_id,
       position: {
         x: equipment.current_ap?.x_coord || null,
         y: equipment.current_ap?.y_coord || null,
@@ -61,7 +62,6 @@ router.get("/", authenticate, async (req, res) => {
       floor: equipment.current_floor,
       room: equipment.current_room,
       access_point: equipment.current_ap,
-      assigned_request: equipment.assigned_request,
     }));
 
     res.json({

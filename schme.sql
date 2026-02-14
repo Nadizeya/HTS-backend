@@ -89,6 +89,23 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS requests (
+    id UUID PRIMARY KEY,
+    patient_name TEXT NOT NULL,
+    priority INTEGER NOT NULL,
+    pickup_room_id UUID NOT NULL REFERENCES rooms(id),
+    destination_room_id UUID NOT NULL REFERENCES rooms(id),
+    equipment_type "EquipmentType" NOT NULL,
+    requested_by UUID NOT NULL REFERENCES users(id),
+    assigned_to UUID REFERENCES users(id),
+    equipment_id UUID,
+    status "RequestStatus" DEFAULT 'pending',
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    assigned_at TIMESTAMP,
+    completed_at TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS equipment (
     id UUID PRIMARY KEY,
     equipment_code TEXT UNIQUE NOT NULL,
@@ -103,22 +120,12 @@ CREATE TABLE IF NOT EXISTS equipment (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS requests (
-    id UUID PRIMARY KEY,
-    patient_name TEXT NOT NULL,
-    priority INTEGER NOT NULL,
-    pickup_room_id UUID NOT NULL REFERENCES rooms(id),
-    destination_room_id UUID NOT NULL REFERENCES rooms(id),
-    equipment_type "EquipmentType" NOT NULL,
-    requested_by UUID NOT NULL REFERENCES users(id),
-    assigned_to UUID REFERENCES users(id),
-    equipment_id UUID REFERENCES equipment(id),
-    status "RequestStatus" DEFAULT 'pending',
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    assigned_at TIMESTAMP,
-    completed_at TIMESTAMP
-);
+-- Add foreign key constraints after both tables exist
+ALTER TABLE requests ADD CONSTRAINT fk_requests_equipment 
+    FOREIGN KEY (equipment_id) REFERENCES equipment(id);
+
+ALTER TABLE equipment ADD CONSTRAINT fk_equipment_request 
+    FOREIGN KEY (assigned_request_id) REFERENCES requests(id);
 
 CREATE TABLE IF NOT EXISTS request_queue (
     id UUID PRIMARY KEY,
