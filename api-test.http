@@ -1,0 +1,246 @@
+### HTS Backend API Tests
+### Use VS Code REST Client extension to run these requests
+### Install: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+@baseUrl = http://localhost:3000
+@accessToken = your_access_token_here
+@refreshToken = your_refresh_token_here
+
+###############################################
+# Health Check & Basic Routes
+###############################################
+
+### Health Check
+GET {{baseUrl}}/health
+
+### API Status
+GET {{baseUrl}}/api
+
+### Test Database Connection
+GET {{baseUrl}}/api/test-db
+
+###############################################
+# Authentication - Login & Logout
+###############################################
+
+### Sign In - Login
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Extract Access Token from Login Response
+@authToken = {{login.response.body.data.session.access_token}}
+@refreshTokenFromLogin = {{login.response.body.data.session.refresh_token}}
+
+###############################################
+# Users Management (Admin - Requires Auth)
+###############################################
+
+### Get All Users
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{authToken}}
+
+### Create New User
+POST {{baseUrl}}/api/users
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "password123",
+  "name": "New User",
+  "phone": "+1234567890",
+  "role": "user",
+  "email_confirm": true
+}
+
+### Get User by ID
+GET {{baseUrl}}/api/users/user-id-here
+Authorization: Bearer {{authToken}}
+
+### Update User
+PUT {{baseUrl}}/api/users/user-id-here
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "phone": "+9876543210",
+  "role": "admin"
+}
+
+### Delete User
+DELETE {{baseUrl}}/api/users/user-id-here
+Authorization: Bearer {{authToken}}
+
+### Reset User Password
+POST {{baseUrl}}/api/users/user-id-here/reset-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "password": "newPassword456"
+}
+
+###############################################
+# Current User Info
+###############################################
+
+### Get Current User
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{authToken}}
+
+###############################################
+# Token Management
+###############################################
+
+### Refresh Access Token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshTokenFromLogin}}"
+}
+
+###############################################
+# Logout
+###############################################
+
+### Sign Out
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{authToken}}
+
+###############################################
+# Protected Routes Examples
+###############################################
+
+### Public Route (No Auth Required)
+GET {{baseUrl}}/api/protected/public
+
+### Protected Route (Auth Required)
+GET {{baseUrl}}/api/protected/profile
+Authorization: Bearer {{authToken}}
+
+### Admin Only Route (Auth + Role Required)
+GET {{baseUrl}}/api/protected/admin
+Authorization: Bearer {{authToken}}
+
+###############################################
+# Testing Different Scenarios
+###############################################
+
+### Test - Invalid Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "wrong@example.com",
+  "password": "wrongpassword"
+}
+
+### Test - Missing Token
+GET {{baseUrl}}/api/auth/me
+
+### Test - Invalid Token
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer invalid_token_here
+
+### Test - Missing Required Fields (Create User)
+POST {{baseUrl}}/api/users
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "email": "incomplete@example.com"
+}
+
+### Test - Unauthorized Access (No Token)
+GET {{baseUrl}}/api/users
+
+###############################################
+# Complete Workflow Example
+###############################################
+
+### Step 1: Login as Admin (First user needs to be created manually in Supabase)
+# @name adminLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+### Step 2: Extract Admin Token
+@adminToken = {{adminLogin.response.body.data.session.access_token}}
+
+### Step 3: Create New User
+# @name createUser
+POST {{baseUrl}}/api/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "doctor@example.com",
+  "password": "doctor123",
+  "name": "Dr. John Smith",
+  "role": "doctor",
+  "specialty": "Cardiology",
+  "email_confirm": true
+}
+
+### Step 4: Login as New User
+# @name userLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "doctor@example.com",
+  "password": "doctor123"
+}
+
+### Step 5: Get New User Info
+@userToken = {{userLogin.response.body.data.session.access_token}}
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{userToken}}
+
+###############################################
+# Notes
+###############################################
+
+# 1. Install REST Client extension in VS Code
+# 2. Make sure SUPABASE_SERVICE_ROLE_KEY is set in .env
+# 3. Create first admin user manually in Supabase Dashboard
+# 4. Start your server: npm run dev
+# 5. Login with admin credentials
+# 6. Use admin token to create new users via /api/users
+# 7. New users can then login with their credentials
+# 8. Click "Send Request" above any ### line
+# 9. Use Ctrl+Alt+R (Windows) or Cmd+Alt+R (Mac) to send requests
+# 10. Results appear in a separate panel
+
+###############################################
+# Quick Test Workflow
+###############################################
+
+# Step 1: Create admin user in Supabase Dashboard:
+#   - Go to Authentication > Users
+#   - Click "Add user" 
+#   - Enter email and password
+#
+# Step 2: Run "Sign In - Login" with admin credentials
+#   - Token will be auto-extracted as {{authToken}}
+#
+# Step 3: Run "Create New User" to add users
+#   - Uses admin token automatically
+#   - Set email_confirm: true to skip email verification
+#
+# Step 4: New users can now login with their credentials
+#   - Run "Sign In - Login" with new user email/password
+#
+# Step 5: Users can access protected endpoints with their token
