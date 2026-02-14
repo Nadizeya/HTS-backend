@@ -16,9 +16,6 @@ GET {{baseUrl}}/health
 ### API Status
 GET {{baseUrl}}/api
 
-### Test Database Connection
-GET {{baseUrl}}/api/test-db
-
 ###############################################
 # Authentication - Login & Registration
 ###############################################
@@ -29,14 +26,14 @@ POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
 {
-  "employeecode": "N001",
-  "fullname": "Sarah Johnson",
+  "employeecode": "N002",
+  "fullname": "Jane Doe",
   "role": "nurse",
-  "phone": "0812345678",
+  "phone": "0812345679",
   "password": "123456"
 }
 
-### Login with Employee Code
+### Login with Employee Code (Nurse)
 # @name login
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
@@ -46,9 +43,31 @@ Content-Type: application/json
   "password": "123456"
 }
 
-### Extract Access Token from Login Response
+### Login as Admin
+# @name adminLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "employeecode": "A001",
+  "password": "admin123"
+}
+
+### Login as Porter
+# @name porterLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "employeecode": "P001",
+  "password": "123456"
+}
+
+### Extract Access Tokens
 @authToken = {{login.response.body.data.token}}
 @refreshTokenFromLogin = {{login.response.body.data.refreshToken}}
+@adminToken = {{adminLogin.response.body.data.token}}
+@porterToken = {{porterLogin.response.body.data.token}}
 
 ### Get Current User Info
 GET {{baseUrl}}/api/auth/me
@@ -68,215 +87,234 @@ POST {{baseUrl}}/api/auth/logout
 Authorization: Bearer {{authToken}}
 
 ###############################################
-# Users Management (Admin - Requires Auth)
+# DASHBOARD APIs - Home Screen
 ###############################################
 
-### Get All Users
-GET {{baseUrl}}/api/users
+### Get Dashboard Data (Home Screen)
+GET {{baseUrl}}/api/dashboard
 Authorization: Bearer {{authToken}}
 
-### Create New User
-POST {{baseUrl}}/api/users
-Authorization: Bearer {{authToken}}
-Content-Type: application/json
-
-{
-  "email": "newuser@example.com",
-  "password": "password123",
-  "name": "New User",
-  "phone": "+1234567890",
-  "role": "user",
-  "email_confirm": true
-}
-
-### Get User by ID
-GET {{baseUrl}}/api/users/user-id-here
-Authorization: Bearer {{authToken}}
-
-### Update User
-PUT {{baseUrl}}/api/users/user-id-here
-Authorization: Bearer {{authToken}}
-Content-Type: application/json
-
-{
-  "name": "Updated Name",
-  "phone": "+9876543210",
-  "role": "admin"
-}
-
-### Delete User
-DELETE {{baseUrl}}/api/users/user-id-here
-Authorization: Bearer {{authToken}}
-
-### Reset User Password
-POST {{baseUrl}}/api/users/user-id-here/reset-password
-Authorization: Bearer {{authToken}}
-Content-Type: application/json
-
-{
-  "password": "newPassword456"
-}
-
-###############################################
-# Current User Info
-###############################################
-
-### Get Current User
-GET {{baseUrl}}/api/auth/me
+### Get User Statistics
+GET {{baseUrl}}/api/dashboard/stats
 Authorization: Bearer {{authToken}}
 
 ###############################################
-# Token Management
+# EQUIPMENT APIs - Nearby Equipment & Search
 ###############################################
 
-### Refresh Access Token
-POST {{baseUrl}}/api/auth/refresh
-Content-Type: application/json
-
-{
-  "refresh_token": "{{refreshTokenFromLogin}}"
-}
-
-###############################################
-# Logout
-###############################################
-
-### Sign Out
-POST {{baseUrl}}/api/auth/logout
+### Get All Equipment
+GET {{baseUrl}}/api/equipment
 Authorization: Bearer {{authToken}}
 
-###############################################
-# Protected Routes Examples
-###############################################
-
-### Public Route (No Auth Required)
-GET {{baseUrl}}/api/protected/public
-
-### Protected Route (Auth Required)
-GET {{baseUrl}}/api/protected/profile
+### Get Nearby Available Equipment (Home Screen)
+GET {{baseUrl}}/api/equipment/nearby
 Authorization: Bearer {{authToken}}
 
-### Admin Only Route (Auth + Role Required)
-GET {{baseUrl}}/api/protected/admin
+### Get Nearby Wheelchairs Only
+GET {{baseUrl}}/api/equipment/nearby?type=wheelchair
 Authorization: Bearer {{authToken}}
 
-###############################################
-# Testing Different Scenarios
-###############################################
+### Get Nearby Beds Only
+GET {{baseUrl}}/api/equipment/nearby?type=bed
+Authorization: Bearer {{authToken}}
 
-### Test - Invalid Login
-POST {{baseUrl}}/api/auth/login
-Content-Type: application/json
+### Search Equipment (Search Bar)
+GET {{baseUrl}}/api/equipment/search?q=wheelchair
+Authorization: Bearer {{authToken}}
 
-{
-  "email": "wrong@example.com",
-  "password": "wrongpassword"
-}
+### Get Equipment by Type
+GET {{baseUrl}}/api/equipment?type=wheelchair
+Authorization: Bearer {{authToken}}
 
-### Test - Missing Token
-GET {{baseUrl}}/api/auth/me
+### Get Available Equipment Only
+GET {{baseUrl}}/api/equipment?status=available
+Authorization: Bearer {{authToken}}
 
-### Test - Invalid Token
-GET {{baseUrl}}/api/auth/me
-Authorization: Bearer invalid_token_here
+### Get Equipment by ID
+GET {{baseUrl}}/api/equipment/equipment-id-here
+Authorization: Bearer {{authToken}}
 
-### Test - Missing Required Fields (Create User)
-POST {{baseUrl}}/api/users
+### Get Equipment Location History
+GET {{baseUrl}}/api/equipment/equipment-id-here/location-history
+Authorization: Bearer {{authToken}}
+
+### Update Equipment Status
+PUT {{baseUrl}}/api/equipment/equipment-id-here/status
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "email": "incomplete@example.com"
+  "status": "maintenance"
 }
 
-### Test - Unauthorized Access (No Token)
-GET {{baseUrl}}/api/users
-
 ###############################################
-# Complete Workflow Example
+# REQUESTS APIs - Active Tasks & Requests
 ###############################################
 
-### Step 1: Login as Admin (First user needs to be created manually in Supabase)
-# @name adminLogin
-POST {{baseUrl}}/api/auth/login
+### Get All Requests
+GET {{baseUrl}}/api/requests
+Authorization: Bearer {{authToken}}
+
+### Get Active Tasks (Home Screen - Active Tasks Section)
+GET {{baseUrl}}/api/requests/active
+Authorization: Bearer {{authToken}}
+
+### Get My Requests (Requests I Created)
+GET {{baseUrl}}/api/requests/my-requests
+Authorization: Bearer {{authToken}}
+
+### Get Assigned Requests (Requests Assigned to Me)
+GET {{baseUrl}}/api/requests/assigned
+Authorization: Bearer {{authToken}}
+
+### Get Requests by Status
+GET {{baseUrl}}/api/requests?status=pending
+Authorization: Bearer {{authToken}}
+
+### Get High Priority Requests
+GET {{baseUrl}}/api/requests?priority=2
+Authorization: Bearer {{authToken}}
+
+### Get Wheelchair Requests
+GET {{baseUrl}}/api/requests?equipment_type=wheelchair
+Authorization: Bearer {{authToken}}
+
+### Get Request by ID (Task Detail Screen)
+GET {{baseUrl}}/api/requests/request-id-here
+Authorization: Bearer {{authToken}}
+
+### Create New Request
+# @name createRequest
+POST {{baseUrl}}/api/requests
+Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "employeecode":"A003",
-  "password":"admin123"
-
+  "patient_name": "John Doe",
+  "priority": 1,
+  "pickup_room_id": "room-id-here",
+  "destination_room_id": "room-id-here",
+  "equipment_type": "wheelchair",
+  "notes": "Patient needs immediate transfer"
 }
 
-POST http://localhost:3000/api/auth/register
-Content-Type: application/json
-
-
-
-### Step 2: Extract Admin Token
-@adminToken = {{adminLogin.response.body.data.session.access_token}}
-
-### Step 3: Create New User
-# @name createUser
-POST {{baseUrl}}/api/users
-Authorization: Bearer {{adminToken}}
+### Update Request Status
+PUT {{baseUrl}}/api/requests/request-id-here/status
+Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "employeecode": "A003",
-  "fullname": "Admin User",
-  "role": "admin",
-  "phone": "0834567890",
-  "password": "123456"
+  "status": "in_progress"
 }
 
-### Step 4: Login as New User
-# @name userLogin
+### Assign Request to Porter
+PUT {{baseUrl}}/api/requests/request-id-here/assign
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "porter_id": "porter-user-id-here",
+  "equipment_id": "equipment-id-here"
+}
+
+### Cancel Request
+DELETE {{baseUrl}}/api/requests/request-id-here
+Authorization: Bearer {{authToken}}
+
+###############################################
+# COMPLETE HOME SCREEN WORKFLOW
+###############################################
+
+### Step 1: Login as Nurse
+# @name nurseLogin
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
   "employeecode": "N001",
   "password": "123456"
-
 }
 
-### Step 5: Get New User Info
-@userToken = {{userLogin.response.body.data.session.access_token}}
-GET {{baseUrl}}/api/auth/me
-Authorization: Bearer {{userToken}}
+@nurseToken = {{nurseLogin.response.body.data.token}}
+
+### Step 2: Get Dashboard Data (Simulates Home Screen Load)
+# This returns:
+# - User info (Good Morning, User)
+# - Nearby equipment count (12 Within 50 meters)
+# - Active tasks list (Wheelchair Required, Bed Transfer Request)
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{nurseToken}}
+
+### Step 3: Search for Wheelchair
+GET {{baseUrl}}/api/equipment/search?q=wheelchair&status=available
+Authorization: Bearer {{nurseToken}}
+
+### Step 4: Get Active Tasks Details
+GET {{baseUrl}}/api/requests/active
+Authorization: Bearer {{nurseToken}}
+
+###############################################
+# Role-Based Testing
+###############################################
+
+### Admin: Get all users
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{adminToken}}
+
+### Nurse: Create request
+POST {{baseUrl}}/api/requests
+Authorization: Bearer {{nurseToken}}
+Content-Type: application/json
+
+{
+  "patient_name": "Test Patient",
+  "priority": 2,
+  "pickup_room_id": "room-id",
+  "destination_room_id": "room-id",
+  "equipment_type": "bed",
+  "notes": "High priority transfer"
+}
+
+### Porter: Get assigned tasks
+GET {{baseUrl}}/api/requests/assigned
+Authorization: Bearer {{porterToken}}
+
+###############################################
+# Priority Labels for Tasks
+###############################################
+
+# Priority values in UI:
+# 1 = STAT (Red badge)
+# 2 = HIGH (Orange badge)
+# 3 = NORMAL (Blue badge)
+# 4+ = LOW (Gray badge)
+
+### Get STAT Priority Requests
+GET {{baseUrl}}/api/requests?priority=1
+Authorization: Bearer {{authToken}}
+
+### Get HIGH Priority Requests
+GET {{baseUrl}}/api/requests?priority=2
+Authorization: Bearer {{authToken}}
+
+### Get NORMAL Priority Requests
+GET {{baseUrl}}/api/requests?priority=3
+Authorization: Bearer {{authToken}}
 
 ###############################################
 # Notes
 ###############################################
 
-# 1. Install REST Client extension in VS Code
-# 2. Make sure SUPABASE_SERVICE_ROLE_KEY is set in .env
-# 3. Create first admin user manually in Supabase Dashboard
-# 4. Start your server: npm run dev
-# 5. Login with admin credentials
-# 6. Use admin token to create new users via /api/users
-# 7. New users can then login with their credentials
-# 8. Click "Send Request" above any ### line
-# 9. Use Ctrl+Alt+R (Windows) or Cmd+Alt+R (Mac) to send requests
-# 10. Results appear in a separate panel
+# Default Test Accounts (from schema):
+# - Nurse:  N001 / 123456
+# - Porter: P001 / 123456
+# - Admin:  A001 / admin123
 
-###############################################
-# Quick Test Workflow
-###############################################
+# Home Screen Data:
+# GET /api/dashboard - Returns all home screen data in one call
+# GET /api/equipment/nearby - Returns nearby equipment count
+# GET /api/requests/active - Returns active tasks list
 
-# Step 1: Create admin user in Supabase Dashboard:
-#   - Go to Authentication > Users
-#   - Click "Add user" 
-#   - Enter email and password
-#
-# Step 2: Run "Sign In - Login" with admin credentials
-#   - Token will be auto-extracted as {{authToken}}
-#
-# Step 3: Run "Create New User" to add users
-#   - Uses admin token automatically
-#   - Set email_confirm: true to skip email verification
-#
-# Step 4: New users can now login with their credentials
-#   - Run "Sign In - Login" with new user email/password
-#
-# Step 5: Users can access protected endpoints with their token
+# Search Functionality:
+# GET /api/equipment/search?q=wheelchair - Search equipment
+# GET /api/equipment/nearby?type=wheelchair - Filter by type

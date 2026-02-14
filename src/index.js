@@ -6,6 +6,9 @@ const supabase = require("./config/supabase");
 // Import routes
 const authRoutes = require("./routes/auth.routes");
 const usersRoutes = require("./routes/users.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
+const equipmentRoutes = require("./routes/equipment.routes");
+const requestsRoutes = require("./routes/requests.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -58,6 +61,15 @@ app.use("/api/auth", authRoutes);
 
 // Users Routes (Protected)
 app.use("/api/users", usersRoutes);
+
+// Dashboard Routes (Protected)
+app.use("/api/dashboard", dashboardRoutes);
+
+// Equipment Routes (Protected)
+app.use("/api/equipment", equipmentRoutes);
+
+// Requests Routes (Protected)
+app.use("/api/requests", requestsRoutes);
 
 // 404 handler
 app.use((req, res) => {
