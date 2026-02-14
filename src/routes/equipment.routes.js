@@ -269,47 +269,6 @@ router.get("/:id/location-history", authenticate, async (req, res) => {
 });
 
 /**
- * GET /api/equipment/available
- * Get count of available equipment by type (for New Request screen)
- * Query params: type (wheelchair/bed), floor_id (optional)
- */
-router.get("/available", authenticate, async (req, res) => {
-  try {
-    const { type, floor_id } = req.query;
-
-    let query = supabase
-      .from("equipment")
-      .select("id, equipment_code, type, battery_level, current_room:current_room_id(id, name)", { count: "exact" })
-      .eq("status", "available");
-
-    if (type) {
-      query = query.eq("type", type);
-    }
-
-    if (floor_id) {
-      query = query.eq("current_floor_id", floor_id);
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) throw error;
-
-    res.json({
-      success: true,
-      data: data || [],
-      count: count || 0,
-      message: count === 0 ? `No available ${type || 'equipment'} found` : undefined,
-    });
-  } catch (error) {
-    console.error("Get available equipment error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-
-/**
  * PUT /api/equipment/:id/status
  * Update equipment status
  */

@@ -228,6 +228,7 @@ INSERT INTO requests VALUES (
     v_wc,
     'pending',
     'Urgent transfer',
+    30,
     NOW(),
     NULL,
     NULL
