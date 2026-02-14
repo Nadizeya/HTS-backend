@@ -1,4 +1,4 @@
-const supabase = require("../config/supabase");
+const authService = require("../services/auth.service");
 
 /**
  * Middleware to verify JWT token and authenticate user
@@ -18,13 +18,10 @@ const authenticate = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    // Verify token with Supabase
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(token);
+    // Verify token and get user
+    const user = await authService.verifyToken(token);
 
-    if (error || !user) {
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: "Invalid or expired token",
@@ -40,7 +37,7 @@ const authenticate = async (req, res, next) => {
     console.error("Authentication error:", error);
     res.status(401).json({
       success: false,
-      message: "Authentication failed",
+      message: error.message || "Authentication failed",
     });
   }
 };
@@ -54,14 +51,17 @@ const optionalAuthenticate = async (req, res, next) => {
 
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.split(" ")[1];
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser(token);
 
-      if (!error && user) {
-        req.user = user;
-        req.token = token;
+      try {
+        const user = await authService.verifyToken(token);
+
+        if (user) {
+          req.user = user;
+          req.token = token;
+        }
+      } catch (error) {
+        // Silently fail for optional authentication
+        console.log("Optional auth failed:", error.message);
       }
     }
 
@@ -73,9 +73,12 @@ const optionalAuthenticate = async (req, res, next) => {
 };
 
 /**
- * Check if user has specific role
+ * Check if user has specific role(s)
  */
 const requireRole = (roles) => {
+  // Ensure roles is an array
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
+
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
@@ -84,9 +87,9 @@ const requireRole = (roles) => {
       });
     }
 
-    const userRole = req.user.user_metadata?.role || req.user.role;
+    const userRole = req.user.role;
 
-    if (!roles.includes(userRole)) {
+    if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: "Insufficient permissions",
@@ -98,9 +101,9 @@ const requireRole = (roles) => {
 };
 
 /**
- * Check if email is verified
+ * Check if user status is available
  */
-const requireVerifiedEmail = (req, res, next) => {
+const requireAvailableStatus = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
@@ -108,10 +111,10 @@ const requireVerifiedEmail = (req, res, next) => {
     });
   }
 
-  if (!req.user.email_confirmed_at) {
+  if (req.user.current_status !== "available") {
     return res.status(403).json({
       success: false,
-      message: "Email verification required",
+      message: "User must be in available status",
     });
   }
 
@@ -122,5 +125,5 @@ module.exports = {
   authenticate,
   optionalAuthenticate,
   requireRole,
-  requireVerifiedEmail,
+  requireAvailableStatus,
 };

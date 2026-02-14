@@ -20,22 +20,52 @@ GET {{baseUrl}}/api
 GET {{baseUrl}}/api/test-db
 
 ###############################################
-# Authentication - Login & Logout
+# Authentication - Login & Registration
 ###############################################
 
-### Sign In - Login
+### Register New User
+# @name register
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "employeecode": "N001",
+  "fullname": "Sarah Johnson",
+  "role": "nurse",
+  "phone": "0812345678",
+  "password": "123456"
+}
+
+### Login with Employee Code
 # @name login
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
-  "password": "password123"
+  "employeecode": "N001",
+  "password": "123456"
 }
 
 ### Extract Access Token from Login Response
-@authToken = {{login.response.body.data.session.access_token}}
-@refreshTokenFromLogin = {{login.response.body.data.session.refresh_token}}
+@authToken = {{login.response.body.data.token}}
+@refreshTokenFromLogin = {{login.response.body.data.refreshToken}}
+
+### Get Current User Info
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{authToken}}
+
+### Refresh Access Token
+# @name refresh
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshTokenFromLogin}}"
+}
+
+### Logout
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{authToken}}
 
 ###############################################
 # Users Management (Admin - Requires Auth)
@@ -172,9 +202,15 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@example.com",
-  "password": "admin123"
+  "employeecode":"A003",
+  "password":"admin123"
+
 }
+
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+
 
 ### Step 2: Extract Admin Token
 @adminToken = {{adminLogin.response.body.data.session.access_token}}
@@ -186,12 +222,11 @@ Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
-  "email": "doctor@example.com",
-  "password": "doctor123",
-  "name": "Dr. John Smith",
-  "role": "doctor",
-  "specialty": "Cardiology",
-  "email_confirm": true
+  "employeecode": "A003",
+  "fullname": "Admin User",
+  "role": "admin",
+  "phone": "0834567890",
+  "password": "123456"
 }
 
 ### Step 4: Login as New User
@@ -200,8 +235,9 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "doctor@example.com",
-  "password": "doctor123"
+  "employeecode": "N001",
+  "password": "123456"
+
 }
 
 ### Step 5: Get New User Info

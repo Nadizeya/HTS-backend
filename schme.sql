@@ -32,6 +32,20 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 
 -- ================================
+-- DROP TABLES (if exist)
+-- ================================
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS equipment_location_logs CASCADE;
+DROP TABLE IF EXISTS request_queue CASCADE;
+DROP TABLE IF EXISTS requests CASCADE;
+DROP TABLE IF EXISTS equipment CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS access_points CASCADE;
+DROP TABLE IF EXISTS rooms CASCADE;
+DROP TABLE IF EXISTS zones CASCADE;
+DROP TABLE IF EXISTS floors CASCADE;
+
+-- ================================
 -- TABLES
 -- ================================
 
@@ -177,6 +191,13 @@ INSERT INTO users VALUES (
     v_porter, 'P001', 'Michael Tan', 'porter',
     '0823456789', 'available', v_floor,
     0, crypt('123456', gen_salt('bf')), NOW()
+);
+
+-- Admin User (password = admin123)
+INSERT INTO users VALUES (
+    gen_random_uuid(), 'A001', 'Administrator', 'admin',
+    '0891234567', 'available', v_floor,
+    0, crypt('admin123', gen_salt('bf')), NOW()
 );
 
 -- Equipment

@@ -1,32 +1,29 @@
 const express = require("express");
 const router = express.Router();
-const supabase = require("../config/supabase");
+const authService = require("../services/auth.service");
+const { authenticate } = require("../middleware/auth.middleware");
 
-// Sign In
+// Login with Employee Code
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { employeecode, password } = req.body;
 
-    if (!email || !password) {
+    if (!employeecode || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message: "Employee code and password are required",
       });
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
+    const result = await authService.login(employeecode, password);
 
     res.json({
       success: true,
       message: "Login successful",
       data: {
-        user: data.user,
-        session: data.session,
+        user: result.user,
+        token: result.token,
+        refreshToken: result.refreshToken,
       },
     });
   } catch (error) {
@@ -38,25 +35,15 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Sign Out
-router.post("/logout", async (req, res) => {
+// Sign Out (JWT-based - just invalidate on client side)
+router.post("/logout", authenticate, async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "No token provided",
-      });
-    }
-
-    const { error } = await supabase.auth.signOut(token);
-
-    if (error) throw error;
-
+    // With JWT, logout is typically handled client-side by removing the token
+    // For server-side logout, you would need to implement a token blacklist
     res.json({
       success: true,
-      message: "Logout successful",
+      message:
+        "Logout successful. Please remove the token from client storage.",
     });
   } catch (error) {
     console.error("Logout error:", error);
@@ -68,27 +55,12 @@ router.post("/logout", async (req, res) => {
 });
 
 // Get Current User
-router.get("/me", async (req, res) => {
+router.get("/me", authenticate, async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "No token provided",
-      });
-    }
-
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(token);
-
-    if (error) throw error;
-
+    // User is already attached to req by authenticate middleware
     res.json({
       success: true,
-      data: user,
+      data: req.user,
     });
   } catch (error) {
     console.error("Get user error:", error);
@@ -102,32 +74,63 @@ router.get("/me", async (req, res) => {
 // Refresh Token
 router.post("/refresh", async (req, res) => {
   try {
-    const { refresh_token } = req.body;
+    const { refreshToken } = req.body;
 
-    if (!refresh_token) {
+    if (!refreshToken) {
       return res.status(400).json({
         success: false,
         message: "Refresh token is required",
       });
     }
 
-    const { data, error } = await supabase.auth.refreshSession({
-      refresh_token,
-    });
-
-    if (error) throw error;
+    const result = await authService.refreshTokens(refreshToken);
 
     res.json({
       success: true,
       message: "Token refreshed successfully",
       data: {
-        session: data.session,
-        user: data.user,
+        user: result.user,
+        token: result.token,
+        refreshToken: result.refreshToken,
       },
     });
   } catch (error) {
     console.error("Refresh token error:", error);
     res.status(401).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// Register new user (optional - for admin use)
+router.post("/register", async (req, res) => {
+  try {
+    const { employeecode, fullname, role, phone, password } = req.body;
+
+    if (!employeecode || !fullname || !role || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee code, full name, role, and password are required",
+      });
+    }
+
+    const user = await authService.createUser({
+      employee_code: employeecode,
+      full_name: fullname,
+      role,
+      phone,
+      password,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(400).json({
       success: false,
       message: error.message,
     });
