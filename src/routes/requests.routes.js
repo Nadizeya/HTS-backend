@@ -247,6 +247,7 @@ router.get("/:id", authenticate, async (req, res) => {
 router.post("/", authenticate, async (req, res) => {
   try {
     const {
+      id,
       patient_name,
       priority,
       pickup_room_id,
@@ -256,7 +257,6 @@ router.post("/", authenticate, async (req, res) => {
     } = req.body;
 
     if (
-      !patient_name ||
       !priority ||
       !pickup_room_id ||
       !destination_room_id ||
@@ -265,24 +265,29 @@ router.post("/", authenticate, async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Missing required fields: patient_name, priority, pickup_room_id, destination_room_id, equipment_type",
+          "Missing required fields: priority, pickup_room_id, destination_room_id, equipment_type",
       });
+    }
+
+    const insertData = {
+      patient_name: patient_name || null,
+      priority,
+      pickup_room_id,
+      destination_room_id,
+      equipment_type,
+      requested_by: req.user.id,
+      notes: notes || null,
+      status: "pending",
+    };
+
+    // Use frontend-provided UUID if available
+    if (id) {
+      insertData.id = id;
     }
 
     const { data, error } = await supabase
       .from("requests")
-      .insert([
-        {
-          patient_name,
-          priority,
-          pickup_room_id,
-          destination_room_id,
-          equipment_type,
-          requested_by: req.user.id,
-          notes: notes || null,
-          status: "pending",
-        },
-      ])
+      .insert([insertData])
       .select(
         `
         *,
