@@ -39,9 +39,7 @@ router.get("/", authenticate, async (req, res) => {
         assigned_user:assigned_to(id, employee_code, full_name)
       `,
       )
-      .or(
-        `requested_by.eq.${userId},assigned_to.eq.${userId}`,
-      )
+      .or(`requested_by.eq.${userId},assigned_to.eq.${userId}`)
       .in("status", ["pending", "queued", "assigned", "in_progress"])
       .order("created_at", { ascending: false });
 
@@ -93,7 +91,7 @@ router.get("/stats", authenticate, async (req, res) => {
     const completed = stats.filter((r) => r.status === "completed").length;
     const inProgress = stats.filter((r) => r.status === "in_progress").length;
     const pending = stats.filter((r) =>
-      ["pending", "queued", "assigned"].includes(r.status)
+      ["pending", "queued", "assigned"].includes(r.status),
     ).length;
 
     res.json({

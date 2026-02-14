@@ -302,6 +302,132 @@ GET {{baseUrl}}/api/requests?priority=3
 Authorization: Bearer {{authToken}}
 
 ###############################################
+# MAP APIs - Equipment Map Screen
+###############################################
+
+### Get All Equipment with Locations (Map View)
+GET {{baseUrl}}/api/map
+Authorization: Bearer {{authToken}}
+
+### Get Equipment on Floor 1 (Map Screen - Floor 1 Selected)
+# @name mapFloor1
+GET {{baseUrl}}/api/map/floor/floor-id-here
+Authorization: Bearer {{authToken}}
+
+### Get Wheelchairs Only on Current Floor
+GET {{baseUrl}}/api/map?type=wheelchair
+Authorization: Bearer {{authToken}}
+
+### Get Beds Only on Current Floor
+GET {{baseUrl}}/api/map?type=bed
+Authorization: Bearer {{authToken}}
+
+### Get Available Equipment Only (Green dots)
+GET {{baseUrl}}/api/map?status=available
+Authorization: Bearer {{authToken}}
+
+### Get In-Use Equipment Only (Orange dots)
+GET {{baseUrl}}/api/map?status=in_use
+Authorization: Bearer {{authToken}}
+
+### Get Equipment on Specific Floor - Wheelchairs
+GET {{baseUrl}}/api/map?floor_id=floor-id-here&type=wheelchair
+Authorization: Bearer {{authToken}}
+
+### Search Equipment by ID or Location (Map Search Bar)
+GET {{baseUrl}}/api/map/search?q=WC-001
+Authorization: Bearer {{authToken}}
+
+### Search by Room Name
+GET {{baseUrl}}/api/map/search?q=ER
+Authorization: Bearer {{authToken}}
+
+### Get Equipment Count Summary
+GET {{baseUrl}}/api/map/equipment-count
+Authorization: Bearer {{authToken}}
+
+### Get Equipment Count for Specific Floor
+GET {{baseUrl}}/api/map/equipment-count?floor_id=floor-id-here
+Authorization: Bearer {{authToken}}
+
+### Get Current User Location (Blue User Icon on Map)
+GET {{baseUrl}}/api/map/user-location
+Authorization: Bearer {{authToken}}
+
+###############################################
+# FLOORS APIs - Floor Selector
+###############################################
+
+### Get All Floors (Floor Selector: 1, 2, 3)
+GET {{baseUrl}}/api/floors
+Authorization: Bearer {{authToken}}
+
+### Get Floor Details with Zones and Rooms
+GET {{baseUrl}}/api/floors/floor-id-here
+Authorization: Bearer {{authToken}}
+
+### Get All Equipment on Specific Floor
+GET {{baseUrl}}/api/floors/floor-id-here/equipment
+Authorization: Bearer {{authToken}}
+
+### Get Wheelchairs on Specific Floor
+GET {{baseUrl}}/api/floors/floor-id-here/equipment?type=wheelchair
+Authorization: Bearer {{authToken}}
+
+### Get Available Equipment on Specific Floor
+GET {{baseUrl}}/api/floors/floor-id-here/equipment?status=available
+Authorization: Bearer {{authToken}}
+
+### Get All Rooms on Specific Floor
+GET {{baseUrl}}/api/floors/floor-id-here/rooms
+Authorization: Bearer {{authToken}}
+
+### Get All Zones on Specific Floor
+GET {{baseUrl}}/api/floors/floor-id-here/zones
+Authorization: Bearer {{authToken}}
+
+### Get Floor Statistics (Equipment counts, etc.)
+GET {{baseUrl}}/api/floors/floor-id-here/stats
+Authorization: Bearer {{authToken}}
+
+###############################################
+# COMPLETE MAP SCREEN WORKFLOW
+###############################################
+
+### Step 1: Login
+# @name mapLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "employeecode": "N001",
+  "password": "123456"
+}
+
+@mapToken = {{mapLogin.response.body.data.token}}
+
+### Step 2: Get All Floors (For Floor Selector)
+GET {{baseUrl}}/api/floors
+Authorization: Bearer {{mapToken}}
+
+### Step 3: Get Equipment on Floor 1 (Default)
+# This simulates loading the map screen with Floor 1 selected
+GET {{baseUrl}}/api/map?floor_id=floor-id-here
+Authorization: Bearer {{mapToken}}
+
+### Step 4: Filter to Show Only Wheelchairs
+GET {{baseUrl}}/api/map?floor_id=floor-id-here&type=wheelchair
+Authorization: Bearer {{mapToken}}
+
+### Step 5: Search for Specific Equipment
+GET {{baseUrl}}/api/map/search?q=WC-001&floor_id=floor-id-here
+Authorization: Bearer {{mapToken}}
+
+### Step 6: Get Equipment Count (For "All (5)" badge)
+GET {{baseUrl}}/api/map/equipment-count?floor_id=floor-id-here
+Authorization: Bearer {{mapToken}}
+
+###############################################
 # Notes
 ###############################################
 

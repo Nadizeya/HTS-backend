@@ -9,6 +9,8 @@ const usersRoutes = require("./routes/users.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const equipmentRoutes = require("./routes/equipment.routes");
 const requestsRoutes = require("./routes/requests.routes");
+const mapRoutes = require("./routes/map.routes");
+const floorsRoutes = require("./routes/floors.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -70,6 +72,12 @@ app.use("/api/equipment", equipmentRoutes);
 
 // Requests Routes (Protected)
 app.use("/api/requests", requestsRoutes);
+
+// Map Routes (Protected)
+app.use("/api/map", mapRoutes);
+
+// Floors Routes (Protected)
+app.use("/api/floors", floorsRoutes);
 
 // 404 handler
 app.use((req, res) => {
